@@ -61,6 +61,11 @@ describe('createRouter', () => {
           return Promise.resolve({
             id: 'test-user',
             token,
+            identity: {
+              type: 'user',
+              userEntityRef: 'test-user',
+              ownershipEntityRefs: ['user:default/test-user'],
+            },
           });
         }),
       } as unknown as IdentityClient,
@@ -150,7 +155,15 @@ describe('createRouter', () => {
             attributes: {},
           },
         },
-        { id: 'test-user', token: 'test-token' },
+        {
+          id: 'test-user',
+          token: 'test-token',
+          identity: {
+            type: 'user',
+            userEntityRef: 'test-user',
+            ownershipEntityRefs: ['user:default/test-user'],
+          },
+        },
       );
       expect(response.body).toEqual([
         { id: '123', result: AuthorizeResult.ALLOW },

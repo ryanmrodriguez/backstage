@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  BackstageIdentity,
-  getIdentityClaims,
-} from '@backstage/plugin-auth-backend';
+import { BackstageIdentityResponse } from '@backstage/plugin-auth-backend';
 import {
   AuthorizeRequest,
   AuthorizeResult,
@@ -41,7 +38,7 @@ const isComponentType = createConditionFactory(isComponentTypeRule);
 export class SimplePermissionPolicy implements PermissionPolicy {
   async handle(
     request: Omit<AuthorizeRequest, 'resourceRef'>,
-    identity?: BackstageIdentity,
+    user?: BackstageIdentityResponse,
   ): Promise<PolicyDecision> {
     if (request.permission.name === techdocsReadPermission.name) {
       return {
@@ -50,16 +47,17 @@ export class SimplePermissionPolicy implements PermissionPolicy {
     }
 
     if (request.permission.resourceType === RESOURCE_TYPE_CATALOG_ENTITY) {
-      if (!identity) {
+      if (!user) {
         return {
           result: AuthorizeResult.DENY,
         };
       }
 
+      const { identity } = user;
       if (request.permission.attributes.action === 'read') {
         return createCatalogPolicyDecision({
           anyOf: [
-            isEntityOwner(getIdentityClaims(identity)),
+            isEntityOwner(identity.ownershipEntityRefs),
             isComponentType(['website']),
             isEntityKind(['template']),
           ],
@@ -67,11 +65,11 @@ export class SimplePermissionPolicy implements PermissionPolicy {
       }
 
       return createCatalogPolicyDecision(
-        isEntityOwner(getIdentityClaims(identity)),
+        isEntityOwner(identity.ownershipEntityRefs),
       );
     }
 
-    if (identity) {
+    if (user) {
       return {
         result: AuthorizeResult.ALLOW,
       };
